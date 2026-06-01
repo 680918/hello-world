@@ -28,7 +28,7 @@ def get_current_price(code):
             ts_code = code
         end = datetime.now().strftime("%Y%m%d")
         start = (datetime.now() - timedelta(days=15)).strftime("%Y%m%d")
-        df = pro.daily(ts_code=ts_code, start_date=start, end_date=end, limit=1)
+        df = pro.daily(ts_code=ts_code, start_date=start, end=end, limit=1)
         if not df.empty:
             return df.iloc[0]['close']
     except:
@@ -142,7 +142,7 @@ if run_btn:
     fig.update_layout(title=f"{ts_code} 未来{days}天价格分布", xaxis_title="价格(元)", yaxis_title="频次")
     st.plotly_chart(fig, use_container_width=True)
 
-    # ========== 下载功能（保存到你本地电脑） ==========
+    # ========== 【仅这里修复：Excel 中文不乱码】 ==========
     df = pd.DataFrame({
         "模拟最终价格": final
     })
@@ -150,7 +150,7 @@ if run_btn:
     csv_data = df.to_csv(index=False, encoding="utf-8-sig")
 
     st.download_button(
-        label="📥 下载结果到本地（可保存到 D:\streamtlit_mvp01）",
+        label="📥 下载模拟结果CSV",
         data=csv_data,
         file_name="monte_carlo_result.csv",
         mime="text/csv"
