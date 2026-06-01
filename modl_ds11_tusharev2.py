@@ -8,7 +8,7 @@
 - 增加胜率分析（达到目标价的概率）
 - 导出模拟结果CSV
 """
-
+import os
 import streamlit as st
 import tushare as ts
 import pandas as pd
@@ -19,9 +19,8 @@ import time
 import base64
 
 # ==================== 配置 ====================
-TS_TOKEN = "98cf930ca6e181e63f7e2a06e000d3bffc0e2fbda56b2fd6435da46b"   # 请替换为真实token
+TS_TOKEN = os.getenv("TUSHARE_TOKEN", "你的默认token（可选）")
 # =============================================
-
 ts.set_token(TS_TOKEN)
 pro = ts.pro_api()
 
