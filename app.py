@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-蒙特卡罗模拟器 v2.0
-Streamlit 云端部署版
+蒙特卡罗模拟器 v2.0｜Streamlit云端稳定版
 """
 
 import streamlit as st
@@ -12,7 +11,7 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-# ==================== 从 Streamlit 云端获取 TOKEN ====================
+# ==================== TOKEN 从云端读取 ====================
 TS_TOKEN = st.secrets.get("TS_TOKEN", "")
 
 # ==================== 页面配置 ====================
@@ -28,7 +27,7 @@ def get_current_price(code):
         else:
             ts_code = code
         end = datetime.now().strftime("%Y%m%d")
-        start = (datetime.now()-timedelta(days=15)).strftime("%Y%m%d")
+        start = (datetime.now() - timedelta(days=15)).strftime("%Y%m%d")
         df = pro.daily(ts_code=ts_code, start_date=start, end_date=end, limit=1)
         if not df.empty:
             return df.iloc[0]['close']
@@ -118,7 +117,7 @@ if run_btn:
         loss = np.mean(final < cost_price)*100 if cost_price>0 else None
         hit = np.mean(final >= target_price)*100 if target_price>0 else None
 
-    st.success("完成")
+    st.success("模拟完成！")
 
     c1,c2,c3 = st.columns(3)
     c1.metric("预期中位数", f"{median:.2f}")
@@ -130,11 +129,39 @@ if run_btn:
     if hit is not None:
         st.metric("目标价概率", f"{hit:.1f}%")
 
+    # ========== 修复版图表（无报错） ==========
     fig = go.Figure()
-    fig.add_histogram(x=final, nbinsx=50)
-    fig.add_vline(x=median, line_dash="dash", line_color="green", annotation="中位数")
-    fig.add_vline(x=current_price, line_color="blue", annotation="当前价")
-    st.plotly_chart(fig)
+    fig.add_histogram(x=final, nbinsx=50, name='价格分布')
+    
+    # 中位数线（修复写法）
+    fig.add_vline(
+        x=median,
+        line_dash="dash",
+        line_color="green"
+    )
+    
+    # 当前价线
+    fig.add_vline(
+        x=current_price,
+        line_color="blue"
+    )
+    
+    # 成本价
+    if cost_price > 0:
+        fig.add_vline(x=cost_price, line_dash="dot", line_color="red")
+    
+    # 目标价
+    if target_price > 0:
+        fig.add_vline(x=target_price, line_dash="longdash", line_color="orange")
 
+    fig.update_layout(
+        title=f"{ts_code} 未来{days}天价格分布",
+        xaxis_title="价格(元)",
+        yaxis_title="频次"
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    # 导出CSV
     df = pd.DataFrame({"模拟价格":final})
-    st.download_button("下载结果", df.to_csv(index=False), file_name="result.csv")
+    st.download_button("📥 下载结果", df.to_csv(index=False), file_name="monte_result.csv")
