@@ -129,39 +129,29 @@ if run_btn:
     if hit is not None:
         st.metric("目标价概率", f"{hit:.1f}%")
 
-    # ========== 修复版图表（无报错） ==========
+    # ========== 修复版图表 ==========
     fig = go.Figure()
     fig.add_histogram(x=final, nbinsx=50, name='价格分布')
-    
-    # 中位数线（修复写法）
-    fig.add_vline(
-        x=median,
-        line_dash="dash",
-        line_color="green"
-    )
-    
-    # 当前价线
-    fig.add_vline(
-        x=current_price,
-        line_color="blue"
-    )
-    
-    # 成本价
+    fig.add_vline(x=median, line_dash="dash", line_color="green")
+    fig.add_vline(x=current_price, line_color="blue")
     if cost_price > 0:
         fig.add_vline(x=cost_price, line_dash="dot", line_color="red")
-    
-    # 目标价
     if target_price > 0:
         fig.add_vline(x=target_price, line_dash="longdash", line_color="orange")
 
-    fig.update_layout(
-        title=f"{ts_code} 未来{days}天价格分布",
-        xaxis_title="价格(元)",
-        yaxis_title="频次"
-    )
-    
+    fig.update_layout(title=f"{ts_code} 未来{days}天价格分布", xaxis_title="价格(元)", yaxis_title="频次")
     st.plotly_chart(fig, use_container_width=True)
 
-    # 导出CSV
-    df = pd.DataFrame({"模拟价格":final})
-    st.download_button("📥 下载结果", df.to_csv(index=False), file_name="monte_result.csv")
+    # ========== 下载功能（保存到你本地电脑） ==========
+    df = pd.DataFrame({
+        "模拟最终价格": final
+    })
+    
+    csv_data = df.to_csv(index=False, encoding="utf-8-sig")
+
+    st.download_button(
+        label="📥 下载结果到本地（可保存到 D:\streamtlit_mvp01）",
+        data=csv_data,
+        file_name="monte_carlo_result.csv",
+        mime="text/csv"
+    )
