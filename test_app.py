@@ -6,22 +6,48 @@
 import sys
 import os
 
-# ==================== 关键修复：Mock Streamlit Secrets ====================
-# 必须在导入 app 之前执行
+# ==================== 关键修复：Mock Streamlit 环境 ====================
 import streamlit as st
 
+# 1. Mock st.secrets
 class MockSecrets:
     def get(self, key, default=None):
         return "fake_ts_token_for_ci"
 
 st.secrets = MockSecrets()
+
+# 2. Mock st.session_state（这是新加的！）
+class MockSessionState:
+    """模拟 Streamlit 的 session_state 对象"""
+    def __init__(self):
+        self._state = {
+            'last_code': '002284',  # 初始化 last_code
+            'pro': None,  # 如果需要的话
+        }
+    
+    def __getattr__(self, key):
+        if key not in self._state:
+            raise AttributeError(f"st.session_state has no attribute '{key}'")
+        return self._state[key]
+    
+    def __setattr__(self, key, value):
+        if key == '_state':
+            super().__setattr__(key, value)
+        else:
+            self._state[key] = value
+    
+    def __contains__(self, key):
+        return key in self._state
+
+# 注入 Mock
+st.session_state = MockSessionState()
 # ==========================================================================
 
 import pytest
 import numpy as np
 import pandas as pd
 
-# 现在安全导入
+# 现在安全导入 app
 from app import fetch_historical_returns, monte_carlo_bootstrap, monte_carlo_normal
 
 # ==================== 单元测试 ====================
@@ -45,17 +71,11 @@ def test_zero_volatility():
 # ==================== 边界测试 ====================
 
 def test_insufficient_data():
-    """
-    测试历史数据不足时的行为。
-    """
-    # 注意：我们不再从 app 导入 pro，而是直接测试函数
-    # 这里我们模拟一个返回数据不足的 DataFrame
-    mock_df = pd.DataFrame({'close': [100] * 10}) # 只有10天数据
-    
-    # 由于 fetch_historical_returns 依赖 pro，我们需要在测试中 Mock pro
-    # 为了简单起见，我们直接测试清洗逻辑
+    """测试历史数据不足时的行为"""
+    # 这里我们直接测试清洗逻辑，不依赖真实的 pro 对象
+    mock_df = pd.DataFrame({'close': [100] * 10})
     returns = mock_df['close'].pct_change().dropna()
-    assert len(returns) < 50  # 验证数据确实不足
+    assert len(returns) < 50
 
 def test_nan_handling():
     returns_with_nan = np.array([0.01, np.nan, 0.02])
