@@ -1,2 +1,2 @@
-# hello-world
-此存储库用于练习 GitHub Flow
+# 蒙特卡罗发生器
+体验个股盈亏概率
