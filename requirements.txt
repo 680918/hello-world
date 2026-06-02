@@ -3,4 +3,4 @@ tushare==1.2.89
 pandas==2.0.3
 numpy==1.24.4
 plotly==5.18.0
-pytest==8.0.0
+
